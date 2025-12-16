@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BS1C - Teste Serial Bluetooth</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div>
+        <div class="title">BS1C • Teste de comunicação via Serial Bluetooth (SPP)</div>
+        <div class="subtitle">
+          Dica: primeiro pareie o BS1C no sistema operacional; depois selecione a porta serial (ex.: <code>/dev/cu.*</code> no macOS).
+        </div>
+      </div>
+      <div class="status" id="statusBadge">Desconectado</div>
+    </header>
+
+    <main class="grid">
+      <section class="card">
+        <h2>Conexão</h2>
+        <div class="row">
+          <label class="label" for="portSelect">Porta</label>
+          <select id="portSelect" class="control"></select>
+          <button id="refreshPortsBtn" class="btn">Atualizar</button>
+        </div>
+        <div class="row">
+          <div class="label"> </div>
+          <button id="connectBtn" class="btn primary">Conectar</button>
+          <button id="disconnectBtn" class="btn danger" disabled>Desconectar</button>
+        </div>
+        <div class="hint" id="portHint">
+          Observação: o “baud rate” do RS232 é configurado no próprio BS1C (não no link Bluetooth).
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Teste</h2>
+        <div class="row">
+          <label class="label" for="messageInput">Mensagem</label>
+          <input id="messageInput" class="control" type="text" value="TESTE" />
+        </div>
+        <div class="row">
+          <label class="label" for="durationInput">Escutar (ms)</label>
+          <input id="durationInput" class="control" type="number" value="1000" min="0" step="50" />
+          <label class="check">
+            <input id="crlfCheckbox" type="checkbox" checked />
+            <span>Adicionar CRLF (\r\n)</span>
+          </label>
+          <button id="sendBtn" class="btn primary" disabled>Enviar e escutar</button>
+        </div>
+
+        <div class="row">
+          <label class="label" for="responseBox">Resposta (capturada)</label>
+        </div>
+        <pre id="responseBox" class="box"></pre>
+      </section>
+
+      <section class="card full">
+        <div class="row between">
+          <h2>Log</h2>
+          <div class="row">
+            <button id="clearLogBtn" class="btn">Limpar</button>
+          </div>
+        </div>
+        <pre id="logBox" class="box log"></pre>
+      </section>
+    </main>
+
+    <script src="./renderer.js"></script>
+  </body>
+</html>
+
+

@@ -1,0 +1,20 @@
+{
+  "name": "bs1c-demo-electronjs",
+  "version": "1.0.0",
+  "description": "Electron app para conectar via porta serial Bluetooth (SPP) e testar comunicação com BS1C.",
+  "private": true,
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^39.2.7"
+  },
+  "dependencies": {
+    "serialport": "^13.0.0"
+  }
+}
