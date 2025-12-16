@@ -5,6 +5,7 @@ Este projeto é uma aplicação em **ElectronJS** para:
 - selecionar uma **porta serial Bluetooth** (SPP / Bluetooth 2.0 “clássico”, típico de HC-05/BS1C)
 - conectar
 - enviar uma mensagem de teste
+- enviar dados em **HEX**
 - **escutar por um período** (padrão: **1000ms**) e exibir a resposta na tela
 
 Referência do produto e parâmetros padrão (ex.: PIN `1234`):  

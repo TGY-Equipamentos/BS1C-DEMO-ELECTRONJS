@@ -11,6 +11,7 @@ const portHint = $('portHint');
 
 const messageInput = $('messageInput');
 const durationInput = $('durationInput');
+const hexCheckbox = $('hexCheckbox');
 const crlfCheckbox = $('crlfCheckbox');
 const sendBtn = $('sendBtn');
 
@@ -30,6 +31,19 @@ function fmtTs(ts) {
 function log(line) {
   logBox.textContent += `${line}\n`;
   logBox.scrollTop = logBox.scrollHeight;
+}
+
+function normalizeHexInput(raw) {
+  const s = String(raw ?? '')
+    .trim()
+    .replace(/0x/gi, '')
+    .replace(/[^0-9a-fA-F]/g, '');
+  return s;
+}
+
+function isValidHexPayload(raw) {
+  const s = normalizeHexInput(raw);
+  return s.length > 0 && s.length % 2 === 0 && /^[0-9a-fA-F]+$/.test(s);
 }
 
 function setStatus(isConnected, details = '') {
@@ -139,14 +153,26 @@ async function sendAndListen() {
   responseBox.textContent = '';
   const message = messageInput.value ?? '';
   const durationMs = Number(durationInput.value) || 1000;
-  const appendCRLF = !!crlfCheckbox.checked;
+  const sendAsHex = !!hexCheckbox.checked;
+  const appendCRLF = sendAsHex ? false : !!crlfCheckbox.checked;
 
-  log(`[${fmtTs(Date.now())}] Enviando: ${JSON.stringify(message)} (CRLF=${appendCRLF}) e escutando ${durationMs}ms...`);
+  if (sendAsHex && !isValidHexPayload(message)) {
+    responseBox.textContent =
+      'HEX inválido. Use bytes em pares (ex.: "54 45 53 54 45" ou "5445535445").';
+    return;
+  }
+
+  log(
+    `[${fmtTs(Date.now())}] Enviando: ${JSON.stringify(message)} (HEX=${sendAsHex} CRLF=${appendCRLF}) e escutando ${durationMs}ms...`,
+  );
 
   sendBtn.disabled = true;
   try {
-    const res = await bs1c.writeAndCapture({ message, durationMs, appendCRLF });
-    responseBox.textContent = res.received || '(sem resposta no período)';
+    const res = await bs1c.writeAndCapture({ message, durationMs, appendCRLF, sendAsHex });
+    const rxText = res.received || '';
+    const rxHex = res.receivedHex || '';
+    responseBox.textContent =
+      rxText || rxHex ? `UTF-8:\n${rxText || '(sem dados UTF-8)'}\n\nHEX:\n${rxHex || '(sem dados HEX)'}` : '(sem resposta no período)';
     log(
       `[${fmtTs(Date.now())}] Captura finalizada: bytes=${res.receivedBytes} duração=${res.durationMs}ms`,
     );
@@ -163,6 +189,23 @@ connectBtn.addEventListener('click', connect);
 disconnectBtn.addEventListener('click', disconnect);
 sendBtn.addEventListener('click', sendAndListen);
 clearLogBtn.addEventListener('click', () => (logBox.textContent = ''));
+
+hexCheckbox.addEventListener('change', () => {
+  const isHex = !!hexCheckbox.checked;
+  crlfCheckbox.disabled = isHex;
+  if (isHex) crlfCheckbox.checked = false;
+
+  if (isHex) {
+    // Se o usuário ainda está com "TESTE", troca por um exemplo útil em HEX.
+    if ((messageInput.value ?? '').trim().toUpperCase() === 'TESTE') {
+      messageInput.value = '54 45 53 54 45';
+    }
+  } else {
+    if ((messageInput.value ?? '').trim().toUpperCase() === '54 45 53 54 45') {
+      messageInput.value = 'TESTE';
+    }
+  }
+});
 
 // Eventos “ao vivo” (úteis pra depurar stream contínuo).
 bs1c.onSerialData((payload) => {
@@ -188,6 +231,7 @@ bs1c.onSerialClosed((payload) => {
 
 // init
 setStatus(false);
+crlfCheckbox.disabled = !!hexCheckbox.checked;
 refreshPorts();
 
 

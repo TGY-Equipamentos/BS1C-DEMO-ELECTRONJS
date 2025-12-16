@@ -134,10 +134,29 @@ function requireOpenPort() {
   return port;
 }
 
+function parseHexPayload(raw) {
+  const cleaned = String(raw ?? "")
+    .trim()
+    .replace(/0x/gi, "")
+    .replace(/[^0-9a-fA-F]/g, "");
+
+  if (!cleaned)
+    throw new Error("HEX vazio. Informe ao menos 1 byte (ex.: 0A).");
+  if (cleaned.length % 2 !== 0)
+    throw new Error(
+      "HEX inválido: quantidade ímpar de caracteres. Use bytes em pares (ex.: 0A 1B 2C)."
+    );
+  if (!/^[0-9a-fA-F]+$/.test(cleaned))
+    throw new Error("HEX inválido: contém caracteres fora de [0-9A-F].");
+
+  return Buffer.from(cleaned, "hex");
+}
+
 async function writeAndCapture({
   message = "",
   durationMs = 1000,
   appendCRLF = true,
+  sendAsHex = false,
 } = {}) {
   const p = requireOpenPort();
 
@@ -147,10 +166,12 @@ async function writeAndCapture({
 
   p.on("data", onData);
 
-  const payload = appendCRLF ? `${message}\r\n` : `${message}`;
+  const payloadBuffer = sendAsHex
+    ? parseHexPayload(message)
+    : Buffer.from(appendCRLF ? `${message}\r\n` : `${message}`, "utf8");
 
   await new Promise((resolve, reject) => {
-    p.write(payload, (err) => {
+    p.write(payloadBuffer, (err) => {
       if (err) return reject(err);
       p.drain((drainErr) => (drainErr ? reject(drainErr) : resolve()));
     });
@@ -163,8 +184,10 @@ async function writeAndCapture({
   const combined = Buffer.concat(dataChunks);
   return {
     ok: true,
-    sent: payload,
+    sent: sendAsHex ? "" : payloadBuffer.toString("utf8"),
+    sentHex: payloadBuffer.toString("hex").toUpperCase(),
     received: combined.toString("utf8"),
+    receivedHex: combined.toString("hex").toUpperCase(),
     receivedBytes: combined.length,
     durationMs: normalizedDuration,
   };
